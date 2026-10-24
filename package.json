@@ -1,0 +1,6 @@
+{
+  "name": "tracciabilita-scampia",
+  "private": true,
+  "description": "Sito pubblico di avanzamento lavori e tracciabilità dei rifiuti del cantiere di Scampia",
+  "engines": { "node": ">=18" }
+}
