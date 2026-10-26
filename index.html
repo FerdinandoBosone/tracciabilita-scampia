@@ -171,7 +171,11 @@ var IMPIANTI = [["B.Energy S.p.A.","San Vitaliano (NA)"],["T.Cycle Industries S.
 function selList(name,label,list,cur){var id="f"+name;return '<label class="f" for="'+id+'">'+esc(label)+'<select id="'+id+'" name="'+name+'" required><option value="">Seleziona…</option>'+
   list.map(function(x){return '<option value="'+esc(x[0])+'"'+(x[0]===cur?" selected":"")+'>'+esc(x[0])+' · '+esc(x[1])+'</option>';}).join("")+'</select></label>';}
 function placeOf(list,name){for(var i=0;i<list.length;i++)if(list[i][0]===name)return list[i][1];return "";}
-var CODE_RE = /^A[1-4]-C\d{2}-[A-Z]{2}-\d{4}$/;
+var CODE_RE = /^A[1-4]-C\d{2}-[A-Z]{2}-(\d{2}\.\d{2}\.\d{2}\*?-)?\d{4}$/;
+function eerDots(e){return String(e||"").trim().replace(/\s+/g,".");}
+function eerP(l){return l.eerP||(l.code.split("-").length===5?l.code.split("-")[3]:eerDots(FR[l.fr].eer));}
+function eerA(l){return l.ca?eerDots(l.ca.eer):"";}
+function eerChip(l){var p=eerP(l),a=eerA(l);if(!a)return '<span class="chip" style="color:var(--s2)">EER presunto '+esc(p)+'</span>';return a===p?'<span class="chip" style="color:var(--s5)">EER '+esc(a)+' · confermato</span>':'<span class="chip" style="color:var(--danger)">EER '+esc(a)+' · corretto (presunto '+esc(p)+')</span>';}
 
 var state = {demo:false,aggiornato:"",lotti:[]}, rev = 0, loaded = false, loadError = "";
 var PIN = "", canEdit = false, scanStream = null, scanTimer = null;
@@ -267,21 +271,22 @@ function vCumuli(){
 function cardLot(l){var s=stato(l);var d=evDate(l,1);var end=evDate(l,5)||refDay();
   return '<button class="lot" data-lot="'+esc(l.code)+'"><span class="code" style="font-size:14px">'+esc(l.code)+'</span>'+
    '<span class="row"><span>'+esc(FR[l.fr].n)+(isHaz(l)?' · <b class="haz">pericoloso</b>':'')+'</span><span class="t">'+fmtT(tLot(l))+' t</span></span>'+
-   '<span class="row"><span>'+esc(AREE[l.area])+'</span><span>'+(s<5?daysBetween(d,end)+' gg in giacenza':'chiuso')+'</span></span></button>';}
+   '<span class="row"><span>'+esc(AREE[l.area])+'</span><span>'+(s<5?daysBetween(d,end)+' gg in giacenza':'chiuso')+'</span></span>'+
+   '<span class="row"><span>'+(eerA(l)?'EER accertato '+esc(eerA(l)):'EER presunto '+esc(eerP(l)))+'</span></span></button>';}
 
 function vLot(code){
   var l=lotByCode(code); if(!l) return '<section class="card"><h2>Lotto non trovato</h2><p>Il codice <span class="code">'+esc(code)+'</span> non è registrato. Controlla l\'etichetta o cercalo tra i cumuli.</p><button class="btn" data-go="cumuli">Vai ai cumuli</button></section>';
   var s=stato(l), f=FR[l.fr];
   var steps='<ol class="steps" style="margin:0;padding:0">'+[1,2,3,4,5].map(function(k){var d=evDate(l,k);return '<li class="'+STATI[k].cls+(d?' done':'')+'"><span class="dotn"><b>'+k+'</b></span><span class="nm">'+esc(STATI[k].n)+'</span><span class="dt">'+(d?esc(fmtD(d)):'–')+'</span></li>';}).join("")+'</ol>';
-  var kv=[["Area d'origine",AREE[l.area]],["Cumulo",String(l.cumulo).padStart(2,"0")],["Frazione",f.n+" ("+l.fr+")"],["Formato il",fmtD(evDate(l,1))],["Quantità stimata",fmtT(l.stima)+" t"]];
+  var kv=[["Codice EER presunto",eerP(l)],["Area d'origine",AREE[l.area]],["Cumulo",String(l.cumulo).padStart(2,"0")],["Frazione",f.n+" ("+l.fr+")"],["Formato il",fmtD(evDate(l,1))],["Quantità stimata",fmtT(l.stima)+" t"]];
   if(l.pr) kv.push(["Verbale di prelievo",l.pr.verbale]);
-  if(l.ca){kv.push(["Codice EER",l.ca.eer+(l.ca.haz?" · pericoloso":"")]);kv.push(["Rapporto di prova",l.ca.rdp+" · "+l.ca.lab+(placeOf(LABS,l.ca.lab)?" ("+placeOf(LABS,l.ca.lab)+")":"")]);kv.push(["Impianto di riferimento",l.ca.imp+(placeOf(IMPIANTI,l.ca.imp)?" ("+placeOf(IMPIANTI,l.ca.imp)+")":"")+" · "+l.ca.op]);}
+  if(l.ca){kv.push(["Codice EER accertato",eerA(l)+(eerA(l)===eerP(l)?" · conferma il presunto":" · corregge il presunto "+eerP(l))+(l.ca.haz?" · pericoloso":"")]);kv.push(["Rapporto di prova",l.ca.rdp+" · "+l.ca.lab+(placeOf(LABS,l.ca.lab)?" ("+placeOf(LABS,l.ca.lab)+")":"")]);kv.push(["Impianto di riferimento",l.ca.imp+(placeOf(IMPIANTI,l.ca.imp)?" ("+placeOf(IMPIANTI,l.ca.imp)+")":"")+" · "+l.ca.op]);}
   if(l.tr){kv.push(["FIR",l.tr.fir]);kv.push(["Trasportatore",l.tr.trasp+" · "+l.tr.targa]);kv.push(["Peso in partenza",fmtT(l.tr.pp)+" t"]);}
   if(l.sc){kv.push(["Peso a destino",fmtT(l.sc.pd)+" t ("+scost(l)+")"]);kv.push(["4ª copia FIR",l.sc.q4?"ricevuta":"in attesa"]);}
   var notes=l.ev.filter(function(e){return e.n;}).map(function(e){return '<li><time>'+esc(fmtD(e.d))+'</time><span>'+esc(STATI[e.s].short)+': '+esc(e.n)+'</span></li>';}).join("");
   return '<section class="grid" style="gap:8px"><button class="btn ghost" data-go="cumuli" style="justify-self:start">← Tutti i cumuli</button>'+
     '<div class="eyebrow">Lotto di produzione</div><h1 class="code" style="font-family:var(--f-mono);font-size:clamp(26px,5vw,40px)">'+esc(l.code)+'</h1>'+
-    '<div class="actions">'+chipSt(s)+(isHaz(l)?'<span class="chip haz">pericoloso</span>':'')+'<span class="muted">'+esc(f.n)+' · '+esc(AREE[l.area])+'</span></div></section>'+
+    '<div class="actions">'+chipSt(s)+eerChip(l)+(isHaz(l)?'<span class="chip haz">pericoloso</span>':'')+'<span class="muted">'+esc(f.n)+' · '+esc(AREE[l.area])+'</span></div></section>'+
     '<section class="card">'+steps+'</section>'+
     '<section class="detail"><div class="grid" style="gap:18px"><div class="card"><h2 style="margin-bottom:10px">Dati del lotto</h2><dl class="kv">'+kv.map(function(r){return '<dt>'+esc(r[0])+'</dt><dd>'+esc(r[1])+'</dd>';}).join("")+'</dl></div>'+
     (notes?'<div class="card"><h2 style="margin-bottom:6px">Note</h2><ul class="feed">'+notes+'</ul></div>':'')+
@@ -296,7 +301,7 @@ function formNext(l,s){
   if(s>=5) return '<div class="notice">Lotto chiuso: scaricato all\'impianto'+(l.sc&&!l.sc.q4?'. Manca la 4ª copia del FIR. <button class="btn ghost" data-act="q4" data-code="'+esc(l.code)+'" style="margin-left:6px">Registra 4ª copia</button>':' e 4ª copia del FIR ricevuta.')+'</div>';
   var n=s+1, f=FR[l.fr], t=today(), h='';
   if(n===2) h=field("d","Data del prelievo","date",t)+field("verbale","N. verbale di prelievo","text","")+field("note","Note (incrementi, quartatura, foto)","text","","full");
-  if(n===3) h=field("d","Data dell'esito","date",t)+field("rdp","Rapporto di prova","text","")+selList("lab","Laboratorio",LABS,(l.ca&&l.ca.lab)||"")+field("eer","Codice EER","text",f.eer)+
+  if(n===3) h=field("d","Data dell'esito","date",t)+field("rdp","Rapporto di prova","text","")+selList("lab","Laboratorio",LABS,(l.ca&&l.ca.lab)||"")+field("eer","Codice EER accertato (presunto "+eerP(l)+")","text",eerP(l).replace(/\./g," "))+
     '<label class="f" for="fhaz">Classificazione<select id="fhaz" name="haz"><option value="0">non pericoloso</option><option value="1"'+(l.fr==="AM"?" selected":"")+'>pericoloso</option></select></label>'+
     selList("imp","Impianto di riferimento",IMPIANTI,"")+'<label class="f" for="fop">Operazione<select id="fop" name="op">'+["R3","R4","R5","R12","R13","D1","D15"].map(function(o){return '<option'+(o===f.op?" selected":"")+'>'+o+'</option>';}).join("")+'</select></label>';
   if(n===4) h=field("d","Data del carico","date",t)+field("fir","N. FIR","text","")+field("trasp","Trasportatore","text","")+field("targa","Targa","text","")+field("pp","Peso in partenza (t)","number","");
@@ -312,7 +317,7 @@ function vFir(){
   return '<section class="grid" style="gap:10px"><div class="eyebrow">Formulari di identificazione dei rifiuti</div><h1>Registro FIR</h1><p class="lead" style="margin:0">Ogni FIR è legato a un lotto e alla sua area d\'origine. Un FIR resta aperto finché il lotto non è scaricato e la 4ª copia non è rientrata.</p></section>'+
    '<section class="card tablewrap"><table><thead><tr><th>FIR</th><th>Lotto</th><th>EER</th><th>Carico</th><th>Trasportatore</th><th>Impianto</th><th>Op.</th><th class="num">Partenza t</th><th class="num">Destino t</th><th>Stato</th></tr></thead><tbody>'+
    (rows.length?rows.map(function(l){var s=stato(l);var st=s===4?'<span class="chip st4">in viaggio</span>':(l.sc.q4?'<span class="chip st5">chiuso</span>':'<span class="chip st2">attesa 4ª copia</span>');
-     return '<tr class="click" data-lot="'+esc(l.code)+'"><td class="code">'+esc(l.tr.fir)+'</td><td class="code">'+esc(l.code)+'</td><td>'+esc(l.ca.eer)+'</td><td>'+esc(fmtD(evDate(l,4)))+'</td><td>'+esc(l.tr.trasp)+'</td><td>'+esc(l.ca.imp)+'</td><td>'+esc(l.ca.op)+'</td><td class="num">'+fmtT(l.tr.pp)+'</td><td class="num">'+(l.sc?fmtT(l.sc.pd):'–')+'</td><td>'+st+'</td></tr>';}).join(""):'<tr><td colspan="10" class="muted">Nessun FIR emesso.</td></tr>')+
+     return '<tr class="click" data-lot="'+esc(l.code)+'"><td class="code">'+esc(l.tr.fir)+'</td><td class="code">'+esc(l.code)+'</td><td>'+esc(eerA(l))+'</td><td>'+esc(fmtD(evDate(l,4)))+'</td><td>'+esc(l.tr.trasp)+'</td><td>'+esc(l.ca.imp)+'</td><td>'+esc(l.ca.op)+'</td><td class="num">'+fmtT(l.tr.pp)+'</td><td class="num">'+(l.sc?fmtT(l.sc.pd):'–')+'</td><td>'+st+'</td></tr>';}).join(""):'<tr><td colspan="10" class="muted">Nessun FIR emesso.</td></tr>')+
    '</tbody><tfoot><tr><td colspan="7" style="font-weight:700">Totale</td><td class="num" style="font-weight:700">'+fmtT(tp)+'</td><td class="num" style="font-weight:700">'+fmtT(td)+'</td><td></td></tr></tfoot></table></section>';
 }
 
@@ -322,6 +327,7 @@ function vNuovo(){
    '<form class="card grid" style="gap:12px" data-form="nuovo"><h2>Nuovo cumulo · riempimento completato</h2><div class="form">'+
     '<label class="f" for="nArea">Area d\'origine<select id="nArea" name="area">'+[1,2,3,4].map(function(a){return '<option value="'+a+'">'+esc(AREE[a])+'</option>';}).join("")+'</select></label>'+
     '<label class="f" for="nFr">Frazione<select id="nFr" name="fr">'+Object.keys(FR).map(function(k){return '<option value="'+k+'">'+k+' · '+esc(FR[k].n)+'</option>';}).join("")+'</select></label>'+
+    '<label class="f" for="nEer">Codice CER/EER presunto<input id="nEer" name="eer" value="'+esc(eerDots(FR.FE.eer))+'" pattern="\\d{2}[ .]?\\d{2}[ .]?\\d{2}\\*?" title="formato 17.04.05 (asterisco se pericoloso)" required></label>'+
     field("d","Data di formazione","date",today())+field("stima","Quantità stimata (t)","number","")+field("note","Note","text","","full").replace(" required","")+
     '</div><p class="muted" id="nCode" style="margin:0">Codice assegnato: <span class="code"></span></p><div class="actions"><button class="btn" type="submit">Crea lotto</button></div></form>'+
    '<div class="grid" style="gap:14px"><div class="card grid" style="gap:10px"><h2>Leggi un QR</h2><p class="muted" style="margin:0">Inquadra l\'etichetta del cumulo: la scheda del lotto si apre da sola.</p>'+
@@ -354,8 +360,9 @@ function go(r){if(r!=="nuovo")stopScan();route=r;try{if(location.hash!=="#"+r)hi
 function drawQR(code){var el=document.getElementById("qrHere");if(!el)return;if(typeof QRCode==="undefined"){el.textContent="QR non disponibile";return;}
   el.innerHTML="";new QRCode(el,{text:qrText(code),width:360,height:360,colorDark:"#0b1a2a",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M});}
 function nextCumulo(area){var mx=0;state.lotti.forEach(function(l){if(l.area===area)mx=Math.max(mx,l.cumulo);});return mx+1;}
-function makeCode(area,fr,d){var p=d.split("-");return "A"+area+"-C"+String(nextCumulo(area)).padStart(2,"0")+"-"+fr+"-"+p[2]+p[1];}
-function updCode(){var f=document.querySelector('[data-form="nuovo"]');if(!f)return;var a=+f.area.value,fr=f.fr.value,d=f.d.value||today();var el=document.querySelector("#nCode .code");if(el)el.textContent=makeCode(a,fr,d);}
+function normEer(e){var m=String(e||"").replace(/\s|\./g,"").match(/^(\d{2})(\d{2})(\d{2})(\*?)$/);return m?m[1]+"."+m[2]+"."+m[3]+m[4]:"";}
+function makeCode(area,fr,eer,d){var p=d.split("-");return "A"+area+"-C"+String(nextCumulo(area)).padStart(2,"0")+"-"+fr+"-"+(normEer(eer)||"00.00.00")+"-"+p[2]+p[1];}
+function updCode(){var f=document.querySelector('[data-form="nuovo"]');if(!f)return;var a=+f.area.value,fr=f.fr.value,d=f.d.value||today();var el=document.querySelector("#nCode .code");if(el)el.textContent=makeCode(a,fr,f.eer.value,d);}
 function toast(msg){document.querySelectorAll(".toast").forEach(function(x){x.remove();});var t=document.createElement("div");t.className="toast";t.setAttribute("role","status");t.textContent=msg;document.body.appendChild(t);setTimeout(function(){t.remove();},3500);}
 
 /* ---------- dati: lettura e salvataggio tramite le funzioni /api ---------- */
@@ -418,12 +425,13 @@ document.addEventListener("click",function(e){
 document.addEventListener("input",function(e){var f=e.target.getAttribute&&e.target.getAttribute("data-filt");
   if(f){filt[f]=e.target.value;var pos=e.target.selectionStart;render();var el=document.querySelector('[data-filt="'+f+'"]');if(el){el.focus();try{if(pos!=null)el.setSelectionRange(pos,pos);}catch(x){}}return;}
   if(e.target.closest('[data-form="nuovo"]'))updCode();});
-document.addEventListener("change",function(e){if(e.target.id==="qrFile"&&e.target.files[0])readQR(e.target.files[0]);
+document.addEventListener("change",function(e){if(e.target.id==="nFr"){var ee=document.getElementById("nEer");if(ee)ee.value=eerDots(FR[e.target.value].eer);}if(e.target.id==="qrFile"&&e.target.files[0])readQR(e.target.files[0]);
   if(e.target.closest&&e.target.closest('[data-form="nuovo"]'))updCode();});
 document.addEventListener("submit",function(e){var f=e.target;var kind=f.getAttribute("data-form");if(!kind)return;e.preventDefault();
   if(kind==="nuovo"){var area=+f.area.value,fr=f.fr.value,d=f.d.value,stima=parseFloat(f.stima.value);
-    var code=makeCode(area,fr,d),cum=nextCumulo(area),note=f.note.value.trim();
-    save(function(s){var ev={s:1,d:d};if(note)ev.n=note;s.lotti.push({code:code,area:area,cumulo:cum,fr:fr,stima:stima,ev:[ev]});},"Lotto "+code+" creato",code);}
+    var ep=normEer(f.eer.value);if(!ep){toast("Codice EER presunto non valido: usa il formato 17.04.05");return;}
+    var code=makeCode(area,fr,ep,d),cum=nextCumulo(area),note=f.note.value.trim();
+    save(function(s){var ev={s:1,d:d};if(note)ev.n=note;s.lotti.push({code:code,area:area,cumulo:cum,fr:fr,eerP:ep,stima:stima,ev:[ev]});},"Lotto "+code+" creato",code);}
   if(kind==="login"){login(f.pin.value.trim());}
   if(kind==="step"){var code2=f.getAttribute("data-code"),n=+f.getAttribute("data-next"),d2=f.d.value;
     save(function(s){var l=null;s.lotti.forEach(function(x){if(x.code===code2)l=x;});if(!l)return;var ev={s:n,d:d2};
@@ -464,7 +472,7 @@ async function downloadLabel(code){
   x.fillStyle="#ffffff";x.font="700 40px 'Barlow Condensed',Arial";x.fillText("CANTIERE SCAMPIA · LOTTO DI PRODUZIONE",40,56);
   x.drawImage(q,40,130,420,420);x.fillStyle="#0b1a2a";x.font="700 64px 'JetBrains Mono',monospace";x.fillText(code,500,200);
   x.font="600 34px 'Source Sans 3',Arial";x.fillText(AREE[l.area]+" · cumulo "+String(l.cumulo).padStart(2,"0"),500,270);x.fillText(FR[l.fr].n,500,320);
-  x.fillText("Formato il "+fmtD(evDate(l,1)),500,370);x.fillStyle="#5a6878";x.fillText(l.ca?"EER "+l.ca.eer:"EER dopo l'esito analitico",500,440);
+  x.fillText("Formato il "+fmtD(evDate(l,1)),500,370);x.fillStyle="#5a6878";x.fillText("EER presunto "+eerP(l),500,430);if(l.ca)x.fillText("EER accertato "+eerA(l),500,480);
   c.toBlob(function(b){var u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download="etichetta-"+code+".png";document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u);},2000);},"image/png");}
 
 /* ---------- avvio ---------- */
