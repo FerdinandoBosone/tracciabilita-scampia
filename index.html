@@ -164,6 +164,13 @@ var FR = {
   IN:{n:"Inerti C&D", eer:"17 01 07", op:"R5"}, PF:{n:"PFU", eer:"16 01 03", op:"R3"},
   RA:{n:"RAEE", eer:"20 01 36", op:"R4"}, CB:{n:"Combusti", eer:"17 09 04", op:"D1"},
   AM:{n:"Amianto", eer:"17 06 05*", op:"D1"}, RS:{n:"Residuo", eer:"19 12 12", op:"D1"}};
+var LABS = [["Lab Service S.r.l.","Pollena Trocchia (NA)"],["EcoRicerche S.r.l.","Capua (CE)"],["Lifeanalytics S.r.l.","Battipaglia (SA)"]];
+var IMPIANTI = [["B.Energy S.p.A.","San Vitaliano (NA)"],["T.Cycle Industries S.r.l.","Teverola (CE)"],["RWM S.r.l.","Pastorano (CE)"],["Cosmer S.r.l.","Pignataro Maggiore (CE)"],
+  ["Ecocart S.r.l.","Arzano (NA)"],["Ambiente Italia S.r.l.","Acerra (NA)"],["Edilcava S.r.l.","Torre del Greco (NA)"],["Tortora Vittorio","Nocera Inferiore (SA)"],
+  ["Ambiente S.p.A.","San Vitaliano (NA)"],["Ecocentro S.r.l.","Pomezia (RM)"],["Cosmo","Noale (VE)"],["Ecofat Centro S.r.l.","Pomezia (RM)"],["Dolerfer","Sant’Arpino (CE)"]];
+function selList(name,label,list,cur){var id="f"+name;return '<label class="f" for="'+id+'">'+esc(label)+'<select id="'+id+'" name="'+name+'" required><option value="">Seleziona…</option>'+
+  list.map(function(x){return '<option value="'+esc(x[0])+'"'+(x[0]===cur?" selected":"")+'>'+esc(x[0])+' · '+esc(x[1])+'</option>';}).join("")+'</select></label>';}
+function placeOf(list,name){for(var i=0;i<list.length;i++)if(list[i][0]===name)return list[i][1];return "";}
 var CODE_RE = /^A[1-4]-C\d{2}-[A-Z]{2}-\d{4}$/;
 
 var state = {demo:false,aggiornato:"",lotti:[]}, rev = 0, loaded = false, loadError = "";
@@ -268,7 +275,7 @@ function vLot(code){
   var steps='<ol class="steps" style="margin:0;padding:0">'+[1,2,3,4,5].map(function(k){var d=evDate(l,k);return '<li class="'+STATI[k].cls+(d?' done':'')+'"><span class="dotn"><b>'+k+'</b></span><span class="nm">'+esc(STATI[k].n)+'</span><span class="dt">'+(d?esc(fmtD(d)):'–')+'</span></li>';}).join("")+'</ol>';
   var kv=[["Area d'origine",AREE[l.area]],["Cumulo",String(l.cumulo).padStart(2,"0")],["Frazione",f.n+" ("+l.fr+")"],["Formato il",fmtD(evDate(l,1))],["Quantità stimata",fmtT(l.stima)+" t"]];
   if(l.pr) kv.push(["Verbale di prelievo",l.pr.verbale]);
-  if(l.ca){kv.push(["Codice EER",l.ca.eer+(l.ca.haz?" · pericoloso":"")]);kv.push(["Rapporto di prova",l.ca.rdp+" · "+l.ca.lab]);kv.push(["Impianto di riferimento",l.ca.imp+" · "+l.ca.op]);}
+  if(l.ca){kv.push(["Codice EER",l.ca.eer+(l.ca.haz?" · pericoloso":"")]);kv.push(["Rapporto di prova",l.ca.rdp+" · "+l.ca.lab+(placeOf(LABS,l.ca.lab)?" ("+placeOf(LABS,l.ca.lab)+")":"")]);kv.push(["Impianto di riferimento",l.ca.imp+(placeOf(IMPIANTI,l.ca.imp)?" ("+placeOf(IMPIANTI,l.ca.imp)+")":"")+" · "+l.ca.op]);}
   if(l.tr){kv.push(["FIR",l.tr.fir]);kv.push(["Trasportatore",l.tr.trasp+" · "+l.tr.targa]);kv.push(["Peso in partenza",fmtT(l.tr.pp)+" t"]);}
   if(l.sc){kv.push(["Peso a destino",fmtT(l.sc.pd)+" t ("+scost(l)+")"]);kv.push(["4ª copia FIR",l.sc.q4?"ricevuta":"in attesa"]);}
   var notes=l.ev.filter(function(e){return e.n;}).map(function(e){return '<li><time>'+esc(fmtD(e.d))+'</time><span>'+esc(STATI[e.s].short)+': '+esc(e.n)+'</span></li>';}).join("");
@@ -289,9 +296,9 @@ function formNext(l,s){
   if(s>=5) return '<div class="notice">Lotto chiuso: scaricato all\'impianto'+(l.sc&&!l.sc.q4?'. Manca la 4ª copia del FIR. <button class="btn ghost" data-act="q4" data-code="'+esc(l.code)+'" style="margin-left:6px">Registra 4ª copia</button>':' e 4ª copia del FIR ricevuta.')+'</div>';
   var n=s+1, f=FR[l.fr], t=today(), h='';
   if(n===2) h=field("d","Data del prelievo","date",t)+field("verbale","N. verbale di prelievo","text","")+field("note","Note (incrementi, quartatura, foto)","text","","full");
-  if(n===3) h=field("d","Data dell'esito","date",t)+field("rdp","Rapporto di prova","text","")+field("lab","Laboratorio","text",(l.ca&&l.ca.lab)||"")+field("eer","Codice EER","text",f.eer)+
+  if(n===3) h=field("d","Data dell'esito","date",t)+field("rdp","Rapporto di prova","text","")+selList("lab","Laboratorio",LABS,(l.ca&&l.ca.lab)||"")+field("eer","Codice EER","text",f.eer)+
     '<label class="f" for="fhaz">Classificazione<select id="fhaz" name="haz"><option value="0">non pericoloso</option><option value="1"'+(l.fr==="AM"?" selected":"")+'>pericoloso</option></select></label>'+
-    field("imp","Impianto di riferimento","text","")+'<label class="f" for="fop">Operazione<select id="fop" name="op">'+["R3","R4","R5","R13","D1","D15"].map(function(o){return '<option'+(o===f.op?" selected":"")+'>'+o+'</option>';}).join("")+'</select></label>';
+    selList("imp","Impianto di riferimento",IMPIANTI,"")+'<label class="f" for="fop">Operazione<select id="fop" name="op">'+["R3","R4","R5","R12","R13","D1","D15"].map(function(o){return '<option'+(o===f.op?" selected":"")+'>'+o+'</option>';}).join("")+'</select></label>';
   if(n===4) h=field("d","Data del carico","date",t)+field("fir","N. FIR","text","")+field("trasp","Trasportatore","text","")+field("targa","Targa","text","")+field("pp","Peso in partenza (t)","number","");
   if(n===5) h=field("d","Data dello scarico","date",t)+field("pd","Peso a destino (t)","number","")+'<label class="f" for="fq4" style="align-self:end;display:flex;gap:8px;align-items:center"><input type="checkbox" id="fq4" name="q4"> 4ª copia del FIR ricevuta</label>';
   return '<form class="card grid" style="gap:12px" data-form="step" data-code="'+esc(l.code)+'" data-next="'+n+'"><h2>Registra: '+esc(STATI[n].n.toLowerCase())+'</h2><div class="form">'+h+'</div>'+
