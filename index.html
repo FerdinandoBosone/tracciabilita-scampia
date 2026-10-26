@@ -322,11 +322,11 @@ function vNuovo(){
     '<div class="actions"><button class="btn" data-act="scan">Inquadra con la fotocamera</button><label class="btn ghost" for="qrFile">Usa una foto</label></div><input id="qrFile" type="file" accept="image/*" capture="environment" hidden>'+
     '<video id="scanVid" playsinline muted hidden style="width:100%;max-width:420px;border-radius:8px;background:#000"></video><p id="qrMsg" class="muted" style="margin:0" aria-live="polite"></p></div>'+
    '<div class="card grid" style="gap:10px"><h2>Sessione</h2><p class="muted" style="margin:0">Sei collegato come addetto di cantiere su questo dispositivo.</p><div class="actions"><button class="btn ghost" data-act="logout">Esci</button></div></div>'+
-   (state.demo?'<div class="card grid" style="gap:10px"><h2>Dati dimostrativi</h2><p class="muted" style="margin:0">I lotti presenti sono esempi. Prima dell\'avvio dei lavori svuota l\'archivio.</p><div class="actions" id="demoAct"><button class="btn warn" data-act="askclear">Elimina i dati dimostrativi</button></div></div>':'')+
+   '<div class="card grid" style="gap:10px"><h2>Dati dimostrativi</h2><p class="muted" style="margin:0">'+(state.demo?'I lotti presenti sono esempi. Se qualcuno li modifica o li cancella per errore, puoi riportare il sito alla situazione iniziale.':'L\'archivio non contiene i dati dimostrativi. Puoi ricaricarli per una dimostrazione.')+'</p><div class="actions" id="demoAct"><button class="btn" data-act="askrestore">Ripristina i dati dimostrativi</button>'+(state.demo?'<button class="btn ghost" data-act="askclear">Elimina i dati dimostrativi</button>':'')+'</div></div>'+
    '</div></section>';
 }
 function vGestioneLocked(){return '<section class="grid" style="gap:10px"><div class="eyebrow">Addetti di cantiere</div><h1>Accesso addetti</h1><p class="lead" style="margin:0">Inserisci il codice di accesso per registrare cumuli, prelievi, analisi, carichi e scarichi.</p></section>'+
-  '<form class="card grid" style="gap:12px;max-width:420px" data-form="login"><label class="f" for="fpin">Codice di accesso<input id="fpin" name="pin" type="password" autocomplete="current-password" required></label><div class="actions"><button class="btn" type="submit">Accedi</button></div><p id="loginMsg" class="muted" style="margin:0" aria-live="polite"></p></form>';}
+  '<form class="card grid" style="gap:12px;max-width:420px" data-form="login"><label class="f" for="fpin">Codice di accesso<input id="fpin" name="pin" type="text" value="Scampia2026" autocomplete="off" required></label><p class="muted" style="margin:0;font-size:13px">Versione dimostrativa: il codice è già inserito, premi Accedi.</p><div class="actions"><button class="btn" type="submit">Accedi</button></div><p id="loginMsg" class="muted" style="margin:0" aria-live="polite"></p></form>';}
 
 /* ---------- shell ---------- */
 function render(){
@@ -374,6 +374,15 @@ async function save(mut,msg,after){
   }catch(e){toast("Nessuna connessione: il dato non è stato salvato. Riprova.");}
   busy=false; lockBtns(false);
 }
+async function restoreDemo(){
+  if(busy)return; busy=true; lockBtns(true);
+  try{var r=await fetch("/api/reset",{method:"POST",headers:{"x-pin":PIN}});var j=await r.json().catch(function(){return {};});
+    if(r.ok){state=j.data;rev=j.rev;toast("Dati dimostrativi ripristinati");go("home");}
+    else if(r.status===401){PIN="";canEdit=false;try{localStorage.removeItem("scampia.pin");}catch(x){}toast("Codice di accesso non più valido: accedi di nuovo.");go("nuovo");}
+    else toast(j.error||"Ripristino non riuscito. Riprova tra poco.");
+  }catch(e){toast("Nessuna connessione: riprova.");}
+  busy=false; lockBtns(false);
+}
 async function login(pin){
   var m=document.getElementById("loginMsg");if(m)m.textContent="Verifica in corso…";
   try{var r=await fetch("/api/auth",{method:"POST",headers:{"x-pin":pin}});
@@ -391,6 +400,8 @@ document.addEventListener("click",function(e){
   if(act==="q4"){var code=a.getAttribute("data-code");save(function(s){s.lotti.forEach(function(x){if(x.code===code)x.sc.q4=true;});},"4ª copia registrata per "+code,code);}
   if(act==="askclear"){document.getElementById("demoAct").innerHTML='<span>Elimino tutti i lotti e i FIR di esempio?</span><button class="btn warn" data-act="clear">Sì, elimina</button><button class="btn ghost" data-act="noclear">Annulla</button>';}
   if(act==="noclear"){render();}
+  if(act==="askrestore"){document.getElementById("demoAct").innerHTML='<span>Riporto il sito ai dati dimostrativi iniziali? Le modifiche fatte finora verranno sostituite.</span><button class="btn" data-act="restore">Sì, ripristina</button><button class="btn ghost" data-act="noclear">Annulla</button>';}
+  if(act==="restore"){restoreDemo();}
   if(act==="logout"){PIN="";canEdit=false;try{localStorage.removeItem("scampia.pin");}catch(x){}stopScan();go("home");}
   if(act==="scan"){startScan();}
   if(act==="stopscan"){stopScan();}
