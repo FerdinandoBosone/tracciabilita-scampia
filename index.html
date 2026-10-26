@@ -310,7 +310,6 @@ function vFir(){
 }
 
 function vNuovo(){
-  if(!canEdit) return vGestioneLocked();
   return '<section class="grid" style="gap:10px"><div class="eyebrow">Addetto di cantiere</div><h1>Gestione</h1><p class="lead" style="margin:0">Registra un nuovo cumulo, leggi l\'etichetta di un lotto o imposta il sito.</p></section>'+
    '<section class="grid g2">'+
    '<form class="card grid" style="gap:12px" data-form="nuovo"><h2>Nuovo cumulo · riempimento completato</h2><div class="form">'+
@@ -321,19 +320,21 @@ function vNuovo(){
    '<div class="grid" style="gap:14px"><div class="card grid" style="gap:10px"><h2>Leggi un QR</h2><p class="muted" style="margin:0">Inquadra l\'etichetta del cumulo: la scheda del lotto si apre da sola.</p>'+
     '<div class="actions"><button class="btn" data-act="scan">Inquadra con la fotocamera</button><label class="btn ghost" for="qrFile">Usa una foto</label></div><input id="qrFile" type="file" accept="image/*" capture="environment" hidden>'+
     '<video id="scanVid" playsinline muted hidden style="width:100%;max-width:420px;border-radius:8px;background:#000"></video><p id="qrMsg" class="muted" style="margin:0" aria-live="polite"></p></div>'+
-   '<div class="card grid" style="gap:10px"><h2>Sessione</h2><p class="muted" style="margin:0">Sei collegato come addetto di cantiere su questo dispositivo.</p><div class="actions"><button class="btn ghost" data-act="logout">Esci</button></div></div>'+
-   '<div class="card grid" style="gap:10px"><h2>Dati dimostrativi</h2><p class="muted" style="margin:0">'+(state.demo?'I lotti presenti sono esempi. Se qualcuno li modifica o li cancella per errore, puoi riportare il sito alla situazione iniziale.':'L\'archivio non contiene i dati dimostrativi. Puoi ricaricarli per una dimostrazione.')+'</p><div class="actions" id="demoAct"><button class="btn" data-act="askrestore">Ripristina i dati dimostrativi</button>'+(state.demo?'<button class="btn ghost" data-act="askclear">Elimina i dati dimostrativi</button>':'')+'</div></div>'+
+   (canEdit?'<div class="card grid" style="gap:10px"><h2>Sessione</h2><p class="muted" style="margin:0">Sei collegato come addetto di cantiere su questo dispositivo.</p><div class="actions"><button class="btn ghost" data-act="logout">Esci</button></div></div>'
+   :'<div class="card grid" style="gap:10px"><h2>Accesso addetti</h2><p class="muted" style="margin:0">Per salvare cumuli, prelievi, analisi, carichi e scarichi serve l\'accesso addetti.</p><div class="actions"><button class="btn" data-go="accesso">Vai all\'accesso addetti</button></div></div>')+
+   (canEdit?'<div class="card grid" style="gap:10px"><h2>Dati dimostrativi</h2><p class="muted" style="margin:0">'+(state.demo?'I lotti presenti sono esempi. Se qualcuno li modifica o li cancella per errore, puoi riportare il sito alla situazione iniziale.':'L\'archivio non contiene i dati dimostrativi. Puoi ricaricarli per una dimostrazione.')+'</p><div class="actions" id="demoAct"><button class="btn" data-act="askrestore">Ripristina i dati dimostrativi</button>'+(state.demo?'<button class="btn ghost" data-act="askclear">Elimina i dati dimostrativi</button>':'')+'</div></div>':'')+
    '</div></section>';
 }
-function vGestioneLocked(){return '<section class="grid" style="gap:10px"><div class="eyebrow">Addetti di cantiere</div><h1>Accesso addetti</h1><p class="lead" style="margin:0">Inserisci il codice di accesso per registrare cumuli, prelievi, analisi, carichi e scarichi.</p></section>'+
+function vAccesso(){if(canEdit)return '<section class="grid" style="gap:10px"><div class="eyebrow">Addetti di cantiere</div><h1>Accesso addetti</h1><p class="lead" style="margin:0">Sei collegato come addetto di cantiere su questo dispositivo.</p></section><div class="card grid" style="gap:12px;max-width:420px"><div class="actions"><button class="btn" data-go="nuovo">Vai a Gestione</button><button class="btn ghost" data-act="logout">Esci</button></div></div>';
+  return '<section class="grid" style="gap:10px"><div class="eyebrow">Addetti di cantiere</div><h1>Accesso addetti</h1><p class="lead" style="margin:0">Inserisci il codice di accesso per registrare cumuli, prelievi, analisi, carichi e scarichi.</p></section>'+
   '<form class="card grid" style="gap:12px;max-width:420px" data-form="login"><label class="f" for="fpin">Codice di accesso<input id="fpin" name="pin" type="text" value="Scampia2026" autocomplete="off" required></label><p class="muted" style="margin:0;font-size:13px">Versione dimostrativa: il codice è già inserito, premi Accedi.</p><div class="actions"><button class="btn" type="submit">Accedi</button></div><p id="loginMsg" class="muted" style="margin:0" aria-live="polite"></p></form>';}
 
 /* ---------- shell ---------- */
 function render(){
   var app=document.getElementById("app");
-  var nav=[["home","Lavori in corso"],["cumuli","Cumuli"],["fir","Registro FIR"]];nav.push(["nuovo",canEdit?"Gestione":"Accesso addetti"]);
+  var nav=[["home","Lavori in corso"],["cumuli","Cumuli"],["fir","Registro FIR"]];nav.push(["nuovo","Gestione"]);nav.push(["accesso","Accesso addetti"]);
   var cur=CODE_RE.test(route)?"cumuli":route;
-  var body= !loaded?'<section class="card"><p style="margin:0">'+(loadError?esc(loadError):'Caricamento dei dati del cantiere…')+'</p></section>': route==="home"?vHome(): route==="cumuli"?vCumuli(): route==="fir"?vFir(): route==="nuovo"?vNuovo(): CODE_RE.test(route)?vLot(route): vHome();
+  var body= !loaded?'<section class="card"><p style="margin:0">'+(loadError?esc(loadError):'Caricamento dei dati del cantiere…')+'</p></section>': route==="home"?vHome(): route==="cumuli"?vCumuli(): route==="fir"?vFir(): route==="nuovo"?vNuovo(): route==="accesso"?vAccesso(): CODE_RE.test(route)?vLot(route): vHome();
   app.innerHTML='<header class="top"><div class="wrap"><div class="brandmark"><b>Cantiere Scampia</b><span>tracciabilità dei rifiuti</span></div>'+rti()+'<nav class="menu" aria-label="Menu">'+
     nav.map(function(n){return '<button data-go="'+n[0]+'"'+(cur===n[0]?' aria-current="page"':'')+'>'+n[1]+'</button>';}).join("")+'</nav></div></header>'+
     (state.demo?'<div class="demo"><div class="wrap"><b>Dati dimostrativi.</b><span>I lotti e i FIR mostrati sono esempi per illustrare il funzionamento, non dati reali di cantiere.</span></div></div>':'')+
@@ -348,7 +349,7 @@ function drawQR(code){var el=document.getElementById("qrHere");if(!el)return;if(
 function nextCumulo(area){var mx=0;state.lotti.forEach(function(l){if(l.area===area)mx=Math.max(mx,l.cumulo);});return mx+1;}
 function makeCode(area,fr,d){var p=d.split("-");return "A"+area+"-C"+String(nextCumulo(area)).padStart(2,"0")+"-"+fr+"-"+p[2]+p[1];}
 function updCode(){var f=document.querySelector('[data-form="nuovo"]');if(!f)return;var a=+f.area.value,fr=f.fr.value,d=f.d.value||today();var el=document.querySelector("#nCode .code");if(el)el.textContent=makeCode(a,fr,d);}
-function toast(msg){var t=document.createElement("div");t.className="toast";t.setAttribute("role","status");t.textContent=msg;document.body.appendChild(t);setTimeout(function(){t.remove();},3500);}
+function toast(msg){document.querySelectorAll(".toast").forEach(function(x){x.remove();});var t=document.createElement("div");t.className="toast";t.setAttribute("role","status");t.textContent=msg;document.body.appendChild(t);setTimeout(function(){t.remove();},3500);}
 
 /* ---------- dati: lettura e salvataggio tramite le funzioni /api ---------- */
 function nowIso(){var t=new Date();return today()+"T"+String(t.getHours()).padStart(2,"0")+":"+String(t.getMinutes()).padStart(2,"0")+":00";}
@@ -361,14 +362,14 @@ async function load(quiet){
 function isTyping(){var a=document.activeElement;return a&&(a.tagName==="INPUT"||a.tagName==="SELECT")&&a.closest("form");}
 function lockBtns(on){document.querySelectorAll(".btn,button[type=submit]").forEach(function(b){b.disabled=on;});}
 async function save(mut,msg,after){
-  if(busy)return; if(!canEdit){go("nuovo");return;}
+  if(busy)return; if(!canEdit){toast("Per salvare serve l'accesso addetti");go("accesso");return;}
   busy=true; lockBtns(true);
   var s=JSON.parse(JSON.stringify(state)); mut(s); s.aggiornato=nowIso();
   try{
     var r=await fetch("/api/state",{method:"POST",headers:{"content-type":"application/json","x-pin":PIN},body:JSON.stringify({rev:rev,data:s})});
     var j=await r.json().catch(function(){return {};});
     if(r.status===409){state=j.data;rev=j.rev;toast("Un altro addetto ha appena aggiornato i dati: controlla e ripeti l'operazione.");render();}
-    else if(r.status===401){PIN="";canEdit=false;try{localStorage.removeItem("scampia.pin");}catch(x){}toast("Codice di accesso non più valido: accedi di nuovo.");go("nuovo");}
+    else if(r.status===401){PIN="";canEdit=false;try{localStorage.removeItem("scampia.pin");}catch(x){}toast("Codice di accesso non più valido: accedi di nuovo.");go("accesso");}
     else if(!r.ok){toast(j.error||"Salvataggio non riuscito. Riprova tra poco.");}
     else {state=j.data;rev=j.rev;toast(msg);go(after||route);}
   }catch(e){toast("Nessuna connessione: il dato non è stato salvato. Riprova.");}
@@ -378,7 +379,7 @@ async function restoreDemo(){
   if(busy)return; busy=true; lockBtns(true);
   try{var r=await fetch("/api/reset",{method:"POST",headers:{"x-pin":PIN}});var j=await r.json().catch(function(){return {};});
     if(r.ok){state=j.data;rev=j.rev;toast("Dati dimostrativi ripristinati");go("home");}
-    else if(r.status===401){PIN="";canEdit=false;try{localStorage.removeItem("scampia.pin");}catch(x){}toast("Codice di accesso non più valido: accedi di nuovo.");go("nuovo");}
+    else if(r.status===401){PIN="";canEdit=false;try{localStorage.removeItem("scampia.pin");}catch(x){}toast("Codice di accesso non più valido: accedi di nuovo.");go("accesso");}
     else toast(j.error||"Ripristino non riuscito. Riprova tra poco.");
   }catch(e){toast("Nessuna connessione: riprova.");}
   busy=false; lockBtns(false);
@@ -386,7 +387,7 @@ async function restoreDemo(){
 async function login(pin){
   var m=document.getElementById("loginMsg");if(m)m.textContent="Verifica in corso…";
   try{var r=await fetch("/api/auth",{method:"POST",headers:{"x-pin":pin}});
-    if(r.ok){PIN=pin;canEdit=true;try{localStorage.setItem("scampia.pin",pin);}catch(x){}toast("Accesso eseguito");render();}
+    if(r.ok){PIN=pin;canEdit=true;try{localStorage.setItem("scampia.pin",pin);}catch(x){}toast("Accesso eseguito");go("nuovo");}
     else if(r.status===429){if(m)m.textContent="Troppi tentativi: attendi un minuto e riprova.";}
     else{if(m)m.textContent="Codice non corretto.";}
   }catch(e){if(m)m.textContent="Nessuna connessione. Riprova.";}
@@ -461,7 +462,7 @@ async function downloadLabel(code){
 
 /* ---------- avvio ---------- */
 (function boot(){
-  var h=decodeURIComponent(location.hash.slice(1));if(h&&(CODE_RE.test(h)||["home","cumuli","fir","nuovo"].indexOf(h)>=0))route=h;
+  var h=decodeURIComponent(location.hash.slice(1));if(h&&(CODE_RE.test(h)||["home","cumuli","fir","nuovo","accesso"].indexOf(h)>=0))route=h;
   try{var p=localStorage.getItem("scampia.pin");if(p){PIN=p;canEdit=true;}}catch(e){}
   render(); load(false);
   setInterval(function(){if(!document.hidden&&!busy)load(true);},60000);
