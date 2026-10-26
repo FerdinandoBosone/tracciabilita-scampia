@@ -4,7 +4,7 @@ const SEED = require("./_seed");
 
 function valid(d) {
   return d && typeof d === "object" && Array.isArray(d.lotti) && d.lotti.length < 5000 &&
-    d.lotti.every((l) => l && /^A[1-4]-C\d{2}-[A-Z]{2}-\d{4}$/.test(l.code) && Array.isArray(l.ev));
+    d.lotti.every((l) => l && /^A[1-4]-C\d{2}-[A-Z]{2}-(\d{2}\.\d{2}\.\d{2}\*?-)?\d{4}$/.test(l.code) && Array.isArray(l.ev));
 }
 
 module.exports = async (req, res) => {

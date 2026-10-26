@@ -4,7 +4,7 @@ module.exports = {
  "aggiornato": "2026-10-20T17:40:00",
  "lotti": [
   {
-   "code": "A2-C01-IN-0510",
+   "code": "A2-C01-IN-17.01.07-0510",
    "area": 2,
    "cumulo": 1,
    "fr": "IN",
@@ -52,10 +52,11 @@ module.exports = {
    "sc": {
     "pd": 118.1,
     "q4": true
-   }
+   },
+   "eerP": "17.01.07"
   },
   {
-   "code": "A2-C02-FE-0610",
+   "code": "A2-C02-FE-17.04.05-0610",
    "area": 2,
    "cumulo": 2,
    "fr": "FE",
@@ -103,10 +104,11 @@ module.exports = {
    "sc": {
     "pd": 23.5,
     "q4": true
-   }
+   },
+   "eerP": "17.04.05"
   },
   {
-   "code": "A2-C03-RS-0810",
+   "code": "A2-C03-RS-19.12.12-0810",
    "area": 2,
    "cumulo": 3,
    "fr": "RS",
@@ -154,10 +156,11 @@ module.exports = {
    "sc": {
     "pd": 62.9,
     "q4": false
-   }
+   },
+   "eerP": "19.12.12"
   },
   {
-   "code": "A2-C04-LE-0910",
+   "code": "A2-C04-LE-17.02.01-0910",
    "area": 2,
    "cumulo": 4,
    "fr": "LE",
@@ -197,10 +200,11 @@ module.exports = {
     "trasp": "Trasporti esempio",
     "targa": "EF456GH",
     "pp": 30.2
-   }
+   },
+   "eerP": "17.02.01"
   },
   {
-   "code": "A1-C01-IN-1210",
+   "code": "A1-C01-IN-17.01.07-1210",
    "area": 1,
    "cumulo": 1,
    "fr": "IN",
@@ -230,10 +234,11 @@ module.exports = {
     "haz": false,
     "imp": "Impianto R5 esempio",
     "op": "R5"
-   }
+   },
+   "eerP": "17.01.07"
   },
   {
-   "code": "A1-C02-PL-1310",
+   "code": "A1-C02-PL-17.02.03-1310",
    "area": 1,
    "cumulo": 2,
    "fr": "PL",
@@ -263,10 +268,11 @@ module.exports = {
     "haz": false,
     "imp": "Impianto R3 esempio",
     "op": "R3"
-   }
+   },
+   "eerP": "17.02.03"
   },
   {
-   "code": "A1-C03-FE-1410",
+   "code": "A1-C03-FE-17.04.05-1410",
    "area": 1,
    "cumulo": 3,
    "fr": "FE",
@@ -284,10 +290,11 @@ module.exports = {
    ],
    "pr": {
     "verbale": "P-007"
-   }
+   },
+   "eerP": "17.04.05"
   },
   {
-   "code": "A3-C01-AM-1210",
+   "code": "A3-C01-AM-17.06.05*-1210",
    "area": 3,
    "cumulo": 1,
    "fr": "AM",
@@ -305,10 +312,11 @@ module.exports = {
    ],
    "pr": {
     "verbale": "P-008"
-   }
+   },
+   "eerP": "17.06.05*"
   },
   {
-   "code": "A3-C02-RA-1510",
+   "code": "A3-C02-RA-20.01.36-1510",
    "area": 3,
    "cumulo": 2,
    "fr": "RA",
@@ -318,10 +326,11 @@ module.exports = {
      "s": 1,
      "d": "2026-10-15"
     }
-   ]
+   ],
+   "eerP": "20.01.36"
   },
   {
-   "code": "A1-C04-PF-1610",
+   "code": "A1-C04-PF-16.01.03-1610",
    "area": 1,
    "cumulo": 4,
    "fr": "PF",
@@ -331,10 +340,11 @@ module.exports = {
      "s": 1,
      "d": "2026-10-16"
     }
-   ]
+   ],
+   "eerP": "16.01.03"
   },
   {
-   "code": "A4-C01-CB-1610",
+   "code": "A4-C01-CB-17.09.04-1610",
    "area": 4,
    "cumulo": 1,
    "fr": "CB",
@@ -345,10 +355,11 @@ module.exports = {
      "d": "2026-10-16",
      "n": "deposito coperto, mantenuto umido"
     }
-   ]
+   ],
+   "eerP": "17.09.04"
   },
   {
-   "code": "A3-C03-LE-1710",
+   "code": "A3-C03-LE-17.02.01-1710",
    "area": 3,
    "cumulo": 3,
    "fr": "LE",
@@ -358,7 +369,8 @@ module.exports = {
      "s": 1,
      "d": "2026-10-17"
     }
-   ]
+   ],
+   "eerP": "17.02.01"
   }
  ]
 };
